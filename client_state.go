@@ -20,9 +20,9 @@ type ClientStateCommand struct {
 
 func (a *ClientStateCommand) Help() string {
 	helpText := `
-Usage: nomad-debug raft logs <path_to_nomad_dir>
+Usage: nomad-debug client state <path_to_nomad_dir>
 
-  Emits the raft logs content in json form.
+  Emits a json representation of the stored client state in json form.
 `
 
 	return strings.TrimSpace(helpText)

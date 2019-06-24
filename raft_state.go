@@ -18,9 +18,9 @@ type RaftStateCommand struct {
 
 func (a *RaftStateCommand) Help() string {
 	helpText := `
-Usage: nomad-debug raft logs <path_to_nomad_dir>
+Usage: nomad-debug raft state <path_to_nomad_dir>
 
-  Emits the raft logs content in json form.
+  Emits the stored state represented by the raft logs, in json form.
 `
 
 	return strings.TrimSpace(helpText)
