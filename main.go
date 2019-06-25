@@ -9,6 +9,9 @@ import (
 
 func main() {
 	commands := map[string]cli.CommandFactory{
+		"raft info": func() (cli.Command, error) {
+			return &RaftInfoCommand{}, nil
+		},
 		"raft logs": func() (cli.Command, error) {
 			return &RaftLogsCommand{}, nil
 		},
