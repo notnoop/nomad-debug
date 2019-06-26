@@ -50,7 +50,7 @@ func (c *RaftLogsCommand) Run(args []string) int {
 	defer store.Close()
 
 	arr := make([]*logMessage, 0, lastIdx-firstIdx+1)
-	for i := firstIdx; i < lastIdx; i++ {
+	for i := firstIdx; i <= lastIdx; i++ {
 		var e raft.Log
 		err := store.GetLog(i, &e)
 		if err != nil {

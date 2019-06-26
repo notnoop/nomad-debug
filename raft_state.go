@@ -72,7 +72,7 @@ func (c *RaftStateCommand) run(args []string) (int, error) {
 		return 1, err
 	}
 
-	for i := firstIdx; i < lastIdx; i++ {
+	for i := firstIdx; i <= lastIdx; i++ {
 		var e raft.Log
 		err := store.GetLog(i, &e)
 		if err != nil {
