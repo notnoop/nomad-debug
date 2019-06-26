@@ -37,5 +37,6 @@ $ go install .
 
 ## TODO
 
+* [ ] Support nomad server raft snapshoted state
 * [ ] Export to a database (e.g. sqlite, postgresql) to ease querying against database
 * [ ] Vendor nomad and its dependencies to avoid needing to checkout as a subdirectory
