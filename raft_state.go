@@ -73,16 +73,19 @@ func (c *RaftStateCommand) run(args []string) (int, error) {
 	defer store.Close()
 
 	logger := hclog.L()
-	// Create an eval broker
+
+	// use dummy non-enabled FSM depedencies
+	periodicDispatch := nomad.NewPeriodicDispatch(logger, nil)
+	blockedEvals := nomad.NewBlockedEvals(nil, logger)
 	evalBroker, err := nomad.NewEvalBroker(1, 1, 1, 1)
 	if err != nil {
 		return 1, err
 	}
 	fsmConfig := &nomad.FSMConfig{
 		EvalBroker: evalBroker,
-		Periodic:   nomad.NewPeriodicDispatch(logger, nil),
-		Blocked:    nomad.NewBlockedEvals(nil, hclog.L()),
-		Logger:     hclog.L(),
+		Periodic:   periodicDispatch,
+		Blocked:    blockedEvals,
+		Logger:     logger,
 		Region:     "default",
 	}
 
