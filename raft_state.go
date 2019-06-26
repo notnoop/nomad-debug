@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,7 +21,14 @@ func (a *RaftStateCommand) Help() string {
 	helpText := `
 Usage: nomad-debug raft state <path_to_nomad_dir>
 
-  Emits the stored state represented by the raft logs, in json form.
+  Emit the nomad server state obtained by replaying the events of the raft log, in json format.
+
+Options:
+
+  --last-index=<last_index>
+    Set the last log index to be applied, to drop spurious log entries not
+    properly commited. If passed last_index is zero or negative, it's perceived
+    as an offset from the last index seen in raft.
 `
 
 	return strings.TrimSpace(helpText)
@@ -41,6 +49,17 @@ func (c *RaftStateCommand) Run(args []string) int {
 }
 
 func (c *RaftStateCommand) run(args []string) (int, error) {
+	var fLastIdx int64
+
+	flags := flag.NewFlagSet(c.Name(), flag.ContinueOnError)
+	flags.Usage = func() { fmt.Println(c.Help()) }
+	flags.Int64Var(&fLastIdx, "last-index", 0, "")
+
+	if err := flags.Parse(args); err != nil {
+		return 1, fmt.Errorf("failed to parse arguments: %v", err)
+	}
+	args = flags.Args()
+
 	if len(args) != 1 {
 		return 1, fmt.Errorf("expected one arg but got %d", len(args))
 	}
@@ -71,6 +90,7 @@ func (c *RaftStateCommand) run(args []string) (int, error) {
 	if err != nil {
 		return 1, err
 	}
+	lastIdx = lastIndex(lastIdx, fLastIdx)
 
 	for i := firstIdx; i <= lastIdx; i++ {
 		var e raft.Log
@@ -107,6 +127,23 @@ func (c *RaftStateCommand) run(args []string) (int, error) {
 	}
 
 	return 0, nil
+}
+
+func lastIndex(raftLastIdx uint64, cliLastIdx int64) uint64 {
+	switch {
+	case cliLastIdx < 0:
+		if raftLastIdx > uint64(-cliLastIdx) {
+			return raftLastIdx - uint64(-cliLastIdx)
+		} else {
+			return 0
+		}
+	case cliLastIdx == 0:
+		return raftLastIdx
+	case uint64(cliLastIdx) < raftLastIdx:
+		return uint64(cliLastIdx)
+	default:
+		return raftLastIdx
+	}
 }
 
 func toArray(iter memdb.ResultIterator, err error) []interface{} {
