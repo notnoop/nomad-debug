@@ -55,13 +55,15 @@ func (c *RaftLogsCommand) Run(args []string) int {
 		err := store.GetLog(i, &e)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to read log entry at index %d: %v\n", i, err)
-			return 1
+			continue
+			//return 1
 		}
 
 		m, err := decode(&e)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to decode log entry at index %d: %v\n", i, err)
-			return 1
+			continue
+			//return 1
 		}
 
 		arr = append(arr, m)
