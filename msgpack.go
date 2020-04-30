@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/ugorji/go/codec"
+	"github.com/hashicorp/go-msgpack/codec"
 )
 
 var MsgpackHandle = func() *codec.MsgpackHandle {
