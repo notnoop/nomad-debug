@@ -64,13 +64,18 @@ func (c *RaftStateCommand) run(args []string) (int, error) {
 		return 1, fmt.Errorf("expected one arg but got %d", len(args))
 	}
 
-	p := filepath.Join(args[0], "server", "raft", "raft.db")
+	p := filepath.Join(args[0], "server", "raft")
 
-	store, firstIdx, lastIdx, err := raftState(p)
+	store, firstIdx, lastIdx, err := raftState(filepath.Join(p, "raft.db"))
 	if err != nil {
 		return 1, fmt.Errorf("failed to open raft logs: %v", err)
 	}
 	defer store.Close()
+
+	snaps, err := raft.NewFileSnapshotStore(p, 1000, os.Stderr)
+	if err != nil {
+		return 1, fmt.Errorf("failed to open snapshot dir: %v", err)
+	}
 
 	logger := hclog.L()
 
@@ -93,6 +98,19 @@ func (c *RaftStateCommand) run(args []string) (int, error) {
 	if err != nil {
 		return 1, err
 	}
+
+	// restore from snapshot first
+	sFirstIdx, err := restoreFromSnapshot(fsm, snaps)
+	if err != nil {
+		return 1, err
+	}
+
+	if sFirstIdx+1 < firstIdx {
+		return 1, fmt.Errorf("missing logs after snapshot [%v,%v]", sFirstIdx+1, firstIdx-1)
+	} else if sFirstIdx > 0 {
+		firstIdx = sFirstIdx + 1
+	}
+
 	lastIdx = lastIndex(lastIdx, fLastIdx)
 
 	for i := firstIdx; i <= lastIdx; i++ {
@@ -127,6 +145,31 @@ func (c *RaftStateCommand) run(args []string) (int, error) {
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(result); err != nil {
 		return 1, fmt.Errorf("failed to encode output: %v", err)
+	}
+
+	return 0, nil
+}
+
+func restoreFromSnapshot(fsm raft.FSM, snaps raft.SnapshotStore) (uint64, error) {
+	snapshots, err := snaps.List()
+	if err != nil {
+		return 0, err
+	}
+
+	for _, snapshot := range snapshots {
+		_, source, err := snaps.Open(snapshot.ID)
+		if err != nil {
+			continue
+		}
+
+		err = fsm.Restore(source)
+		source.Close()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to restore source %v: %v", snapshot.ID, err)
+			continue
+		}
+
+		return snapshot.Index, nil
 	}
 
 	return 0, nil
