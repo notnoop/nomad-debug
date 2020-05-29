@@ -12,7 +12,7 @@ import "github.com/hashicorp/nomad/nomad/structs"
 var msgTypeNames = map[structs.MessageType]string{
 EOF
 
-  curl -sSL https://raw.githubusercontent.com/hashicorp/nomad/master/nomad/structs/structs.go \
+  cat ../nomad/structs/structs.go \
   	| grep -A500 'NodeRegisterRequestType' \
   	| grep -v -e '//' \
   	| awk '/^\)$/ { exit; } /.*/ { printf "  structs.%s: \"%s\",\n", $1, $1}'
