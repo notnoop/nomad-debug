@@ -18,9 +18,9 @@ func main() {
 		"raft state": func() (cli.Command, error) {
 			return &RaftStateCommand{}, nil
 		},
-		"client state": func() (cli.Command, error) {
-			return &ClientStateCommand{}, nil
-		},
+		//"client state": func() (cli.Command, error) {
+		//return &ClientStateCommand{}, nil
+		//},
 	}
 	cli := &cli.CLI{
 		Name:       "nomad-debug",
