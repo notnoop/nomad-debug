@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-memdb"
 	"github.com/hashicorp/nomad/nomad"
 	"github.com/hashicorp/raft"
@@ -77,20 +77,20 @@ func (c *RaftStateCommand) run(args []string) (int, error) {
 		return 1, fmt.Errorf("failed to open snapshot dir: %v", err)
 	}
 
-	logger := hclog.L()
+	logger := log.New(os.Stderr, "", 0) //hclog.L()
 
 	// use dummy non-enabled FSM depedencies
 	periodicDispatch := nomad.NewPeriodicDispatch(logger, nil)
-	blockedEvals := nomad.NewBlockedEvals(nil, logger)
 	evalBroker, err := nomad.NewEvalBroker(1, 1, 1, 1)
 	if err != nil {
 		return 1, err
 	}
+	blockedEvals := nomad.NewBlockedEvals(evalBroker)
 	fsmConfig := &nomad.FSMConfig{
 		EvalBroker: evalBroker,
 		Periodic:   periodicDispatch,
 		Blocked:    blockedEvals,
-		Logger:     logger,
+		LogOutput:  os.Stderr,
 		Region:     "default",
 	}
 
@@ -152,7 +152,7 @@ func (c *RaftStateCommand) run(args []string) (int, error) {
 
 func restoreFromSnapshot(fsm raft.FSM, snaps raft.SnapshotStore) (uint64, error) {
 	snapshots, err := snaps.List()
-	fmt.Println("FOUND ", snapshots, err)
+	//fmt.Println("FOUND ", snapshots, err)
 	if err != nil {
 		return 0, err
 	}
