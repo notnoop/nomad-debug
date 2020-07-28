@@ -21,6 +21,9 @@ func main() {
 		"client state": func() (cli.Command, error) {
 			return &ClientStateCommand{}, nil
 		},
+		"version": func() (cli.Command, error) {
+			return &VersionCommand{}, nil
+		},
 	}
 	cli := &cli.CLI{
 		Name:       "nomad-debug",
